@@ -1,0 +1,248 @@
+#Install pymongo
+!pip install pymongo
+
+
+from pymongo.mongo_client import MongoClient
+
+uri = "mongodb+srv://peterthuku1:hUyCKcVu4uCrRNqz@cluster0.nzkbwm7.mongodb.net/?retryWrites=true&w=majority"
+
+# Create a new client and connect to the server
+client = MongoClient(uri)
+
+# Send a ping to confirm a successful connection
+try:
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(e)
+
+#Create a new database mygeodb
+#Access a database (it will be created if it doesn't exist)
+mydb = client["mygeodb"]
+
+print(client.list_database_names())
+#Create a new collection 'places' within mygeodb
+mycol = mydb["places"]
+# List all database collections (must add documents so that the collection can be created/listed)
+for i in mydb.list_collection_names():
+    print(i)
+
+#Delete all database collections (if any)
+for i in mydb.list_collection_names():
+  mydb[i].drop()
+  print("Collection " + i + " dropped")
+
+import pandas as pd
+
+# Connect to the MongoDB database (change the database name to your preference)
+db = client["peterthuku1"]
+
+
+data = pd.read_csv('/content/TEST17.csv')
+
+
+# Convert the DataFrame to a list of dictionaries (each row becomes a dictionary)
+records = data.to_dict(orient="records")
+
+# Insert the list of records into the MongoDB collection
+x = mydb.mycol.insert_many(records)
+data.head()
+
+collection = mydb["places2"]
+#Create a new collection 'places' within mygeodb
+mycol2 = mydb["places2"]
+
+# Connect to the MongoDB database (change the database name to your preference)
+db = client["peterthuku1"]
+
+
+data = pd.read_csv('/content/TEST34.csv')
+
+
+# Convert the DataFrame to a list of dictionaries (each row becomes a dictionary)
+records2 = data.to_dict(orient="records")
+
+# Insert the list of records into the MongoDB collection
+x = mydb.mycol2.insert_many(records2)
+
+data.head()
+
+print(x.inserted_ids
+
+#Find the first dodument in the collection
+x = mydb.mycol.find_one()
+print(x)
+
+#ALL DATA INSERTED INTO MONGO DB   - First Collection
+
+data = pd.read_csv('/content/TEST17.csv')
+
+
+# Convert the DataFrame to a list of dictionaries (each row becomes a dictionary)
+records = data.to_dict(orient="records")
+
+# Insert the list of records into the MongoDB collection
+x = mydb.mycol.insert_many(records)
+
+#Find all documents in the collection
+for x in mydb.mycol.find().limit(10):
+   print(x)
+
+#ALL DATA INSERTED INTO MONGO DB   - Second Collection
+
+
+data = pd.read_csv('/content/TEST34.csv')
+
+
+# Convert the DataFrame to a list of dictionaries (each row becomes a dictionary)
+records2 = data.to_dict(orient="records")
+
+# Insert the list of records into the MongoDB collection
+x = mydb.mycol2.insert_many(records2)
+
+#Find all documents in the collection
+for x in mydb.mycol2.find().limit(10):
+   print(x)
+
+#Report number of documents in First collection
+i = mydb.mycol.count_documents({});
+print(i);
+
+#Report number of documents in Second collection
+i = mydb.mycol2.count_documents({});
+print(i);
+
+# Get a reference to your collection   - First Collection
+mycol = mydb['mycol']  # Replace with your collection name
+
+# Update documents to include the "Loc" field with 2D coordinates
+# Assuming your latitude and longitude fields are "latitude" and "longitude"
+for doc in mycol.find():
+    latitude = doc["latitude"]
+    longitude = doc["longitude"]
+    loc = [longitude, latitude]
+    mycol.update_one({"_id": doc["_id"]}, {"$set": {"Loc": loc}})
+
+# Create a 2D index on the "Loc" field
+mycol.create_index([("Loc", GEO2D)])
+
+# Get a reference to your collection - Second Collection
+mycol2 = mydb['mycol2']  # Replace with your collection name
+
+# Update documents to include the "Loc" field with 2D coordinates
+# Assuming your latitude and longitude fields are "latitude" and "longitude"
+for doc in mycol2.find():
+    latitude = doc["latitude"]
+    longitude = doc["longitude"]
+    loc = [longitude, latitude]
+    mycol2.update_one({"_id": doc["_id"]}, {"$set": {"Loc": loc}})
+
+# Create a 2D index on the "Loc" field
+mycol2.create_index([("Loc", GEO2D)])
+
+#Insert locations (more documents) in the collection
+y = mydb.mycol.insert_many(
+    [{"Loc": [-113.916, 49.043]}, {"Loc": [30, 5]}, {"Loc": [-113.740666667, 49.0628333333]}, {"Loc": [4, 4]}]
+)
+#list all docuemnts in the collection
+for z in mydb.mycol.find().limit(10):
+  print(z)
+
+#Insert locations (more documents) in the collection
+y = mydb.mycol2.insert_many(
+    [{"Loc": [-113.915, 49.0396666667]}, {"Loc": [-113.911666667, 49.035]}, {"Loc": [-113.909666667, 49.0286666667]}, {"Loc": [6, 4]}]
+)
+#list all docuemnts in the collection
+for z in mydb.mycol2.find().limit(10):
+  print(z)
+
+
+#Query 1 - find documents near a given location  - Spatial - Using the Spatial Index "LOC "
+query = {"Loc": {"$near": [-113.910666667, 49.0311666667]}}
+for doc in mydb.mycol.find(query).limit(3):
+  print(doc)
+
+#QUERY 2 - Querying Observations with a given time zone- Non Spatial
+
+    # Define your query criteria
+query = {"time_zone": "Mountain Time (US & Canada)"}
+# Query the collection based on your criteria
+result = mydb.mycol.find(query).limit(5)
+
+# Iterate through the cursor and print each document
+for document in result:
+    print(document)
+
+#QUERY 3 - Querying Observations with a given scientific name - Non Spatial
+
+    # Define your query criteria
+query = {"scientific": "Ochotona princeps"}
+# Query the collection based on your criteria
+result = mydb.mycol.find(query).limit(5)
+
+# Iterate through the cursor and print each document
+for document in result:
+    print(document)
+
+#Query 4 - for all items within a given rectangle (specified by lower-left and upper-right coordinates) -Spatial
+query = {"Loc": {"$within": {"$box": [[-114.104476352, 48.9647981439], [-113.909666667, 49.0286666667]]}}}
+for doc in mydb.mycol.find(query).sort("latitude"):
+  print(doc)
+
+#Query 5 - Querying a particular observation from a given Longitude  - Spatial
+
+# Query and sort documents based on the "longitude" field
+results = mydb.mycol.find({'longitude': {'$gt': -113.910666667}}).limit(1)
+
+# Iterate through the cursor and print each document
+for document in results:
+    print(document)
+
+#Query 6 - sort by ID's, descending order - Non Spatial
+
+data = pd.read_csv('/content/TEST34.csv')
+# Convert the DataFrame to a list of dictionaries (each row becomes a dictionary)
+records = data.to_dict(orient="records")
+
+# Insert the list of records into the MongoDB collection
+x = mydb.mycol.insert_many(records)
+
+# Query and sort documents by "id" in descending order and limit the results to 3 documents
+for x in mydb.mycol2.find().sort("id", -1).limit(5):
+    print(x)
+
+#Query 7 - Circle (specified by center point and radius)  - Spatial
+query = {"Loc": {"$within": {"$center": [[-113.912, 49.036], 30]}}}
+for doc in mydb.mycol.find(query).sort("_id"):
+  print(doc)
+
+#Query 8 - Querying Observations with Id greater that 115419 & Observed date also greater than 2012-08-18 - Non Spatial
+
+for x in mydb.mycol.find({
+    "$and": [
+        {'id': {"$gt": 115419}},
+        {'observed_1': {"$gt": "2012-08-18"}}
+    ]
+}).limit(1):
+    print(x)
+
+
+#Query 9-  for all items within a given rectangle (specified by lower-left and upper-right coordinates) - Spatial
+query = {"Loc": {"$within": {"$box": [[-113.917, 49.0448333333], [-113.740666667, 49.0628333333]]}}}
+for doc in mydb.mycol.find(query).sort("_id"):
+  print(doc)
+
+#Query 10 - Query for matching both 'place_gues' and 'scientific' fields - Spatial & Non Spatial
+query = {
+    "$and": [
+        {"place_gues": "Waterton Lakes National Park of Canada"},
+        {"scientific": "Viola glabella"}
+    ]
+}
+
+# Query the collection based on your criteria
+result = mydb.mycol.find(query).limit(2)
+
+# Iterate through the cursor and print each document
+for document in result:
+    print(document)
